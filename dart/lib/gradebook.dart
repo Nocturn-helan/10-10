@@ -2,6 +2,9 @@ import 'logger.dart';
 import 'student.dart';
 
 /// 成绩册类：内部持有学生列表，构造时接收列表，并混入日志能力。
+///
+/// 日志能力通过 `with Logger` 混入，而非 `extends` 某个日志基类；
+/// 用 mixin 替代一层继承的理由详见 [Logger] 的文档注释。
 class GradeBook with Logger {
   final List<Student> _students;
 
@@ -35,6 +38,26 @@ class GradeBook with Logger {
     final count = _students.where((s) => s.score >= 60).length;
     log('及格人数 = $count');
     return count;
+  }
+
+  /// 及格学生的分档人数汇总，返回形如 `优=1，良=1，中=1` 的字符串。
+  ///
+  /// 单条链式调用完成"一组统计"：`where → map → fold → entries → map → toList → join`。
+  String passedTierSummary() {
+    final summary = _students
+        .where((s) => s.score >= 60) // 1. 过滤及格学生
+        .map((s) => _tierOf(s.score)) // 2. 映射到分档标签
+        .fold<Map<String, int>>( // 3. 聚合计数
+          <String, int>{},
+          (counts, tier) =>
+              counts..update(tier, (v) => v + 1, ifAbsent: () => 1),
+        )
+        .entries // 4. 转为条目集合
+        .map((e) => '${e.key}=${e.value}') // 5. 格式化为 "标签=人数"
+        .toList() // 6. 收成列表
+        .join('，'); // 7. 拼接成串
+    log('及格分档汇总 = $summary');
+    return summary;
   }
 
   /// 按优良中分档：优(>=90)、良(80~89)、中(60~79)；低于 60 归入"不及格"

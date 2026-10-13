@@ -21,6 +21,8 @@ void main() {
       expect(grouped['良']!.length, 1);
       expect(grouped['中']!.length, 1);
       expect(grouped['不及格']!.length, 1);
+
+      expect(book.passedTierSummary(), '优=1，良=1，中=1');
     });
 
     test('空列表：平均分为 0、最高分为 null、及格人数为 0', () {
